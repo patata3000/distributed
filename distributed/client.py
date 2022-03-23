@@ -273,7 +273,9 @@ class Future(WrappedKey):
             return self.client.sync(self._result, callback_timeout=timeout)
 
         # shorten error traceback
-        result = self.client.sync(self._result, callback_timeout=timeout, raiseit=False)
+        result = self.client.sync(
+            self._result, callback_timeout=timeout, raiseit=False
+        )
         if self.status == "error":
             typ, exc, tb = result
             raise exc.with_traceback(tb)
@@ -330,7 +332,9 @@ class Future(WrappedKey):
         --------
         Future.traceback
         """
-        return self.client.sync(self._exception, callback_timeout=timeout, **kwargs)
+        return self.client.sync(
+            self._exception, callback_timeout=timeout, **kwargs
+        )
 
     def add_done_callback(self, fn):
         """Call callback on future when callback has finished
@@ -363,7 +367,9 @@ class Future(WrappedKey):
                 logger.exception("Error in callback %s of %s:", fn, fut)
 
         self.client.loop.add_callback(
-            done_callback, self, partial(cls._cb_executor.submit, execute_callback)
+            done_callback,
+            self,
+            partial(cls._cb_executor.submit, execute_callback),
         )
 
     def cancel(self, **kwargs):
@@ -432,7 +438,9 @@ class Future(WrappedKey):
         --------
         Future.exception
         """
-        return self.client.sync(self._traceback, callback_timeout=timeout, **kwargs)
+        return self.client.sync(
+            self._traceback, callback_timeout=timeout, **kwargs
+        )
 
     @property
     def type(self):
@@ -449,7 +457,9 @@ class Future(WrappedKey):
         if not self._cleared and self.client.generation == self._generation:
             self._cleared = True
             try:
-                self.client.loop.add_callback(self.client._dec_ref, stringify(self.key))
+                self.client.loop.add_callback(
+                    self.client._dec_ref, stringify(self.key)
+                )
             except TypeError:  # pragma: no cover
                 pass  # Shutting down, add_callback may be None
 
@@ -485,9 +495,7 @@ class Future(WrappedKey):
 
     def __repr__(self):
         if self.type:
-            return (
-                f"<Future: {self.status}, type: {typename(self.type)}, key: {self.key}>"
-            )
+            return f"<Future: {self.status}, type: {typename(self.type)}, key: {self.key}>"
         else:
             return f"<Future: {self.status}, key: {self.key}>"
 
@@ -778,6 +786,10 @@ class Client(SyncMethodMixin):
         connection_limit=512,
         **kwargs,
     ):
+        print(
+            "SAUUUUUUUUUUUUUUUUUUUUUUCIIIIIIIIIIIIIISSSSSSSSSSSSSSSEEEEEEEEEEEEE",
+            flush=True,
+        )
         if timeout == no_default:
             timeout = dask.config.get("distributed.comm.timeouts.connect")
         if timeout is not None:
@@ -821,7 +833,9 @@ class Client(SyncMethodMixin):
         if address is None:
             address = dask.config.get("scheduler-address", None)
             if address:
-                logger.info("Config value `scheduler-address` found: %s", address)
+                logger.info(
+                    "Config value `scheduler-address` found: %s", address
+                )
 
         if address is not None and kwargs:
             raise ValueError(f"Unexpected keyword arguments: {sorted(kwargs)}")
@@ -882,7 +896,9 @@ class Client(SyncMethodMixin):
         heartbeat_interval = parse_timedelta(heartbeat_interval, default="ms")
 
         scheduler_info_interval = parse_timedelta(
-            dask.config.get("distributed.client.scheduler-info-interval", default="ms")
+            dask.config.get(
+                "distributed.client.scheduler-info-interval", default="ms"
+            )
         )
 
         self._periodic_callbacks = dict()
@@ -1031,7 +1047,9 @@ class Client(SyncMethodMixin):
             info = self.cluster.scheduler.identity()
             scheduler = self.cluster.scheduler
         elif (
-            self._loop_runner.is_started() and self.scheduler and not self.asynchronous
+            self._loop_runner.is_started()
+            and self.scheduler
+            and not self.asynchronous
         ):
             info = sync(self.loop, self.scheduler.identity)
             scheduler = self.scheduler
@@ -1280,7 +1298,9 @@ class Client(SyncMethodMixin):
         if msg[0].get("error"):
             raise ImportError(msg[0]["error"])
         if msg[0].get("warning"):
-            warnings.warn(version_module.VersionMismatchWarning(msg[0]["warning"]))
+            warnings.warn(
+                version_module.VersionMismatchWarning(msg[0]["warning"])
+            )
 
         bcomm = BatchedSend(interval="10ms", loop=self.loop)
         bcomm.start(comm)
@@ -1299,7 +1319,9 @@ class Client(SyncMethodMixin):
         if self.status not in ("running", "connecting"):
             return
         try:
-            self._scheduler_identity = SchedulerInfo(await self.scheduler.identity())
+            self._scheduler_identity = SchedulerInfo(
+                await self.scheduler.identity()
+            )
         except OSError:
             logger.debug("Not able to query scheduler for identity")
 
@@ -1391,7 +1413,9 @@ class Client(SyncMethodMixin):
                         msgs = await self.scheduler_comm.comm.read()
                     except CommClosedError:
                         if self.status == "running":
-                            logger.info("Client report stream closed to scheduler")
+                            logger.info(
+                                "Client report stream closed to scheduler"
+                            )
                             logger.info("Reconnecting...")
                             self.status = "connecting"
                             await self._reconnect()
@@ -1514,7 +1538,9 @@ class Client(SyncMethodMixin):
                 and handle_report_task is not current_task
             ):
                 with suppress(asyncio.CancelledError, TimeoutError):
-                    await asyncio.wait_for(asyncio.shield(handle_report_task), 0.1)
+                    await asyncio.wait_for(
+                        asyncio.shield(handle_report_task), 0.1
+                    )
 
             if (
                 self.scheduler_comm
@@ -1873,10 +1899,17 @@ class Client(SyncMethodMixin):
 
         if batch_size and batch_size > 1 and total_length > batch_size:
             batches = list(
-                zip(*(partition_all(batch_size, iterable) for iterable in iterables))
+                zip(
+                    *(
+                        partition_all(batch_size, iterable)
+                        for iterable in iterables
+                    )
+                )
             )
             if isinstance(key, list):
-                keys = [list(element) for element in partition_all(batch_size, key)]
+                keys = [
+                    list(element) for element in partition_all(batch_size, key)
+                ]
             else:
                 keys = [key for _ in range(len(batches))]
             return sum(
@@ -1930,7 +1963,9 @@ class Client(SyncMethodMixin):
                 )
 
         if not kwargs:
-            dsk = {key: (func,) + args for key, args in zip(keys, zip(*iterables))}
+            dsk = {
+                key: (func,) + args for key, args in zip(keys, zip(*iterables))
+            }
         else:
             kwargs2 = {}
             dsk = {}
@@ -1971,7 +2006,9 @@ class Client(SyncMethodMixin):
 
         return [futures[stringify(k)] for k in keys]
 
-    async def _gather(self, futures, errors="raise", direct=None, local_worker=None):
+    async def _gather(
+        self, futures, errors="raise", direct=None, local_worker=None
+    ):
         unpacked, future_set = unpack_remotedata(futures, byte_keys=True)
         mismatched_futures = [f for f in future_set if f.client is not self]
         if mismatched_futures:
@@ -2017,7 +2054,10 @@ class Client(SyncMethodMixin):
             exceptions = set()
             bad_keys = set()
             for key in keys:
-                if key not in self.futures or self.futures[key].status in failed:
+                if (
+                    key not in self.futures
+                    or self.futures[key].status in failed
+                ):
                     exceptions.add(key)
                     if errors == "raise":
                         try:
@@ -2039,12 +2079,18 @@ class Client(SyncMethodMixin):
 
             if local_worker:  # look inside local worker
                 data.update(
-                    {k: local_worker.data[k] for k in keys if k in local_worker.data}
+                    {
+                        k: local_worker.data[k]
+                        for k in keys
+                        if k in local_worker.data
+                    }
                 )
                 keys = [k for k in keys if k not in data]
 
             # We now do an actual remote communication with workers or scheduler
-            if self._gather_future:  # attach onto another pending gather request
+            if (
+                self._gather_future
+            ):  # attach onto another pending gather request
                 self._gather_keys |= set(keys)
                 response = await self._gather_future
             else:  # no one waiting, go ahead
@@ -2091,23 +2137,35 @@ class Client(SyncMethodMixin):
         """
         async with self._gather_semaphore:
             keys = list(self._gather_keys)
-            self._gather_keys = None  # clear state, these keys are being sent off
+            self._gather_keys = (
+                None  # clear state, these keys are being sent off
+            )
             self._gather_future = None
 
             if direct or local_worker:  # gather directly from workers
-                who_has = await retry_operation(self.scheduler.who_has, keys=keys)
-                data2, missing_keys, missing_workers = await gather_from_workers(
+                who_has = await retry_operation(
+                    self.scheduler.who_has, keys=keys
+                )
+                (
+                    data2,
+                    missing_keys,
+                    missing_workers,
+                ) = await gather_from_workers(
                     who_has, rpc=self.rpc, close=False
                 )
                 response = {"status": "OK", "data": data2}
                 if missing_keys:
                     keys2 = [key for key in keys if key not in data2]
-                    response = await retry_operation(self.scheduler.gather, keys=keys2)
+                    response = await retry_operation(
+                        self.scheduler.gather, keys=keys2
+                    )
                     if response["status"] == "OK":
                         response["data"].update(data2)
 
             else:  # ask scheduler to gather data for us
-                response = await retry_operation(self.scheduler.gather, keys=keys)
+                response = await retry_operation(
+                    self.scheduler.gather, keys=keys
+                )
 
         return response
 
@@ -2158,7 +2216,9 @@ class Client(SyncMethodMixin):
             )
 
         elif isinstance(futures, Iterator):
-            return (self.gather(f, errors=errors, direct=direct) for f in futures)
+            return (
+                self.gather(f, errors=errors, direct=direct) for f in futures
+            )
         else:
             if hasattr(thread_state, "execution_state"):  # within worker task
                 local_worker = thread_state.execution_state["worker"]
@@ -2209,7 +2269,9 @@ class Client(SyncMethodMixin):
             if hash:
                 names = [type(x).__name__ + "-" + tokenize(x) for x in data]
             else:
-                names = [type(x).__name__ + "-" + uuid.uuid4().hex for x in data]
+                names = [
+                    type(x).__name__ + "-" + uuid.uuid4().hex for x in data
+                ]
             data = dict(zip(names, data))
 
         assert isinstance(data, dict)
@@ -2247,7 +2309,9 @@ class Client(SyncMethodMixin):
                     if time() > start + timeout:
                         raise TimeoutError("No valid workers found")
                     # Exclude paused and closing_gracefully workers
-                    nthreads = await self.scheduler.ncores_running(workers=workers)
+                    nthreads = await self.scheduler.ncores_running(
+                        workers=workers
+                    )
                 if not nthreads:  # pragma: no cover
                     raise ValueError("No valid workers found")
 
@@ -2411,7 +2475,9 @@ class Client(SyncMethodMixin):
         force : boolean (False)
             Cancel this future even if other clients desire it
         """
-        return self.sync(self._cancel, futures, asynchronous=asynchronous, force=force)
+        return self.sync(
+            self._cancel, futures, asynchronous=asynchronous, force=force
+        )
 
     async def _retry(self, futures):
         keys = list({stringify(f.key) for f in futures_of(futures)})
@@ -2433,7 +2499,9 @@ class Client(SyncMethodMixin):
         """
         return self.sync(self._retry, futures, asynchronous=asynchronous)
 
-    async def _publish_dataset(self, *args, name=None, override=False, **kwargs):
+    async def _publish_dataset(
+        self, *args, name=None, override=False, **kwargs
+    ):
         with log_errors():
             coroutines = []
 
@@ -2781,7 +2849,9 @@ class Client(SyncMethodMixin):
             **kwargs,
         )
 
-    @_deprecated(use_instead="Client.run which detects async functions automatically")
+    @_deprecated(
+        use_instead="Client.run which detects async functions automatically"
+    )
     def run_coroutine(self, function, *args, **kwargs):
         """
         Spawn a coroutine on all workers.
@@ -2826,7 +2896,9 @@ class Client(SyncMethodMixin):
         if stacklevel is None:
             pattern: re.Pattern | None
             if ignore_modules:
-                pattern = re.compile("|".join([f"(?:{mod})" for mod in ignore_modules]))
+                pattern = re.compile(
+                    "|".join([f"(?:{mod})" for mod in ignore_modules])
+                )
             else:
                 pattern = None
         else:
@@ -2872,12 +2944,18 @@ class Client(SyncMethodMixin):
         actors=None,
     ):
         with self._refcount_lock:
-            if actors is not None and actors is not True and actors is not False:
+            if (
+                actors is not None
+                and actors is not True
+                and actors is not False
+            ):
                 actors = list(self._expand_key(actors))
 
             # Make sure `dsk` is a high level graph
             if not isinstance(dsk, HighLevelGraph):
-                dsk = HighLevelGraph.from_collections(id(dsk), dsk, dependencies=())
+                dsk = HighLevelGraph.from_collections(
+                    id(dsk), dsk, dependencies=()
+                )
 
             annotations = {}
             if user_priority:
@@ -2889,7 +2967,9 @@ class Client(SyncMethodMixin):
             if retries:
                 annotations["retries"] = retries
             if allow_other_workers not in (True, False, None):
-                raise TypeError("allow_other_workers= must be True, False, or None")
+                raise TypeError(
+                    "allow_other_workers= must be True, False, or None"
+                )
             if allow_other_workers:
                 annotations["allow_other_workers"] = allow_other_workers
             if resources:
@@ -3012,7 +3092,9 @@ class Client(SyncMethodMixin):
                 except Exception:
                     should_rejoin = False
             try:
-                results = self.gather(packed, asynchronous=asynchronous, direct=direct)
+                results = self.gather(
+                    packed, asynchronous=asynchronous, direct=direct
+                )
             finally:
                 for f in futures.values():
                     f.release()
@@ -3079,7 +3161,9 @@ class Client(SyncMethodMixin):
         Client.persist : trigger computation of collection's tasks
         """
         dsk_orig = collection.__dask_graph__()
-        dsk = self._optimize_insert_futures(dsk_orig, collection.__dask_keys__())
+        dsk = self._optimize_insert_futures(
+            dsk_orig, collection.__dask_keys__()
+        )
 
         if dsk is dsk_orig:
             return collection
@@ -3447,15 +3531,22 @@ class Client(SyncMethodMixin):
         """
         return self.sync(self._rebalance, futures, workers, **kwargs)
 
-    async def _replicate(self, futures, n=None, workers=None, branching_factor=2):
+    async def _replicate(
+        self, futures, n=None, workers=None, branching_factor=2
+    ):
         futures = self.futures_of(futures)
         await _wait(futures)
         keys = {stringify(f.key) for f in futures}
         await self.scheduler.replicate(
-            keys=list(keys), n=n, workers=workers, branching_factor=branching_factor
+            keys=list(keys),
+            n=n,
+            workers=workers,
+            branching_factor=branching_factor,
         )
 
-    def replicate(self, futures, n=None, workers=None, branching_factor=2, **kwargs):
+    def replicate(
+        self, futures, n=None, workers=None, branching_factor=2, **kwargs
+    ):
         """Set replication of futures within network
 
         Copy data onto many workers.  This helps to broadcast frequently
@@ -3611,7 +3702,9 @@ class Client(SyncMethodMixin):
             workers = [workers]
 
         async def _():
-            return HasWhat(await self.scheduler.has_what(workers=workers, **kwargs))
+            return HasWhat(
+                await self.scheduler.has_what(workers=workers, **kwargs)
+            )
 
         return self.sync(_)
 
@@ -3675,7 +3768,9 @@ class Client(SyncMethodMixin):
         --------
         Client.who_has
         """
-        return self.sync(self.scheduler.nbytes, keys=keys, summary=summary, **kwargs)
+        return self.sync(
+            self.scheduler.nbytes, keys=keys, summary=summary, **kwargs
+        )
 
     def call_stack(self, futures=None, keys=None):
         """The actively running call stack of all relevant keys
@@ -3791,7 +3886,9 @@ class Client(SyncMethodMixin):
             from distributed import profile
 
             data = profile.plot_data(state)
-            figure, source = profile.plot_figure(data, sizing_mode="stretch_both")
+            figure, source = profile.plot_figure(
+                data, sizing_mode="stretch_both"
+            )
 
             if plot == "save" and not filename:
                 filename = "dask-profile.html"
@@ -4000,7 +4097,9 @@ class Client(SyncMethodMixin):
         """
         if not isinstance(keys, (list, tuple)):
             keys = (keys,)
-        return self.sync(self.scheduler.get_metadata, keys=keys, default=default)
+        return self.sync(
+            self.scheduler.get_metadata, keys=keys, default=default
+        )
 
     def get_scheduler_logs(self, n=None):
         """Get logs from scheduler
@@ -4039,7 +4138,9 @@ class Client(SyncMethodMixin):
         Dictionary mapping worker address to logs.
         Logs are returned in reversed order (newest first)
         """
-        return self.sync(self.scheduler.worker_logs, n=n, workers=workers, nanny=nanny)
+        return self.sync(
+            self.scheduler.worker_logs, n=n, workers=workers, nanny=nanny
+        )
 
     def log_event(self, topic, msg):
         """Log an event under a given topic
@@ -4126,7 +4227,10 @@ class Client(SyncMethodMixin):
             raise ValueError(f"No event handler known for topic {topic}.")
 
     def retire_workers(
-        self, workers: list[str] | None = None, close_workers: bool = True, **kwargs
+        self,
+        workers: list[str] | None = None,
+        close_workers: bool = True,
+        **kwargs,
     ):
         """Retire certain workers on the scheduler
 
@@ -4276,7 +4380,11 @@ class Client(SyncMethodMixin):
         return workers, responses
 
     def start_ipython_workers(
-        self, workers=None, magic_names=False, qtconsole=False, qtconsole_args=None
+        self,
+        workers=None,
+        magic_names=False,
+        qtconsole=False,
+        qtconsole_args=None,
     ):
         """Start IPython kernels on workers
 
@@ -4326,12 +4434,15 @@ class Client(SyncMethodMixin):
         if isinstance(workers, (str, Number)):
             workers = [workers]
 
-        (workers, info_dict) = sync(self.loop, self._start_ipython_workers, workers)
+        (workers, info_dict) = sync(
+            self.loop, self._start_ipython_workers, workers
+        )
 
         if magic_names and isinstance(magic_names, str):
             if "*" in magic_names:
                 magic_names = [
-                    magic_names.replace("*", str(i)) for i in range(len(workers))
+                    magic_names.replace("*", str(i))
+                    for i in range(len(workers))
                 ]
             else:
                 magic_names = [magic_names]
@@ -4351,11 +4462,16 @@ class Client(SyncMethodMixin):
 
             for worker, connection_info in info_dict.items():
                 name = "dask-" + worker.replace(":", "-").replace("/", "-")
-                connect_qtconsole(connection_info, name=name, extra_args=qtconsole_args)
+                connect_qtconsole(
+                    connection_info, name=name, extra_args=qtconsole_args
+                )
         return info_dict
 
     def start_ipython_scheduler(
-        self, magic_name="scheduler_if_ipython", qtconsole=False, qtconsole_args=None
+        self,
+        magic_name="scheduler_if_ipython",
+        qtconsole=False,
+        qtconsole_args=None,
     ):
         """Start IPython kernel on the scheduler
 
@@ -4408,7 +4524,9 @@ class Client(SyncMethodMixin):
         if qtconsole:
             from distributed._ipython_utils import connect_qtconsole
 
-            connect_qtconsole(info, name="dask-scheduler", extra_args=qtconsole_args)
+            connect_qtconsole(
+                info, name="dask-scheduler", extra_args=qtconsole_args
+            )
         return info
 
     @classmethod
@@ -4520,12 +4638,16 @@ class Client(SyncMethodMixin):
         filename="task-stream.html",
         bokeh_resources=None,
     ):
-        msgs = await self.scheduler.get_task_stream(start=start, stop=stop, count=count)
+        msgs = await self.scheduler.get_task_stream(
+            start=start, stop=stop, count=count
+        )
         if plot:
             from distributed.diagnostics.task_stream import rectangles
 
             rects = rectangles(msgs)
-            from distributed.dashboard.components.scheduler import task_stream_figure
+            from distributed.dashboard.components.scheduler import (
+                task_stream_figure,
+            )
 
             source, figure = task_stream_figure(sizing_mode="stretch_both")
             source.data.update(rects)
@@ -4572,7 +4694,9 @@ class Client(SyncMethodMixin):
             )
             # note: plugin is constructed in async def _register_scheduler_plugin
         elif kwargs:
-            raise ValueError("kwargs provided but plugin is already an instance")
+            raise ValueError(
+                "kwargs provided but plugin is already an instance"
+            )
 
         if name is None:
             name = _get_plugin_name(plugin)
@@ -4619,7 +4743,9 @@ class Client(SyncMethodMixin):
                 raise exc.with_traceback(tb)
         return responses
 
-    def register_worker_plugin(self, plugin=None, name=None, nanny=None, **kwargs):
+    def register_worker_plugin(
+        self, plugin=None, name=None, nanny=None, **kwargs
+    ):
         """
         Registers a lifecycle worker plugin for all current and future workers.
 
@@ -4697,7 +4823,9 @@ class Client(SyncMethodMixin):
             )
             plugin = plugin(**kwargs)
         elif kwargs:
-            raise ValueError("kwargs provided but plugin is already an instance")
+            raise ValueError(
+                "kwargs provided but plugin is already an instance"
+            )
 
         if name is None:
             name = _get_plugin_name(plugin)
@@ -4935,7 +5063,9 @@ class as_completed:
     3
     """
 
-    def __init__(self, futures=None, loop=None, with_results=False, raise_errors=True):
+    def __init__(
+        self, futures=None, loop=None, with_results=False, raise_errors=True
+    ):
         if futures is None:
             futures = []
         self.futures = defaultdict(lambda: 0)
@@ -5409,7 +5539,10 @@ class performance_report:
         if code is None:
             code = client._get_computation_code(self._stacklevel + 1)
         data = await client.scheduler.performance_report(
-            start=self.start, last_count=self.last_count, code=code, mode=self.mode
+            start=self.start,
+            last_count=self.last_count,
+            code=code,
+            mode=self.mode,
         )
         with open(self.filename, "w") as f:
             f.write(data)
@@ -5451,7 +5584,9 @@ class get_task_metadata:
         return self
 
     async def __aexit__(self, typ, value, traceback):
-        response = await get_client().scheduler.stop_task_metadata(name=self.name)
+        response = await get_client().scheduler.stop_task_metadata(
+            name=self.name
+        )
         self.metadata = response["metadata"]
         self.state = response["state"]
 
