@@ -786,14 +786,13 @@ class Client(SyncMethodMixin):
         connection_limit=512,
         **kwargs,
     ):
-        print(
-            "SAUUUUUUUUUUUUUUUUUUUUUUCIIIIIIIIIIIIIISSSSSSSSSSSSSSSEEEEEEEEEEEEE",
-            flush=True,
-        )
+        print("SAUUUUUUUUUUUUUUUUUIIIIIISSSSSSSSSSSSEEEEEEEE", flush=True)
         if timeout == no_default:
             timeout = dask.config.get("distributed.comm.timeouts.connect")
+            print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", flush=True)
         if timeout is not None:
             timeout = parse_timedelta(timeout, "s")
+            print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB", flush=True)
         self._timeout = timeout
 
         self.futures = dict()
@@ -801,11 +800,13 @@ class Client(SyncMethodMixin):
         self._handle_report_task = None
         if name is None:
             name = dask.config.get("client-name", None)
+        print("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC", flush=True)
         self.id = (
             type(self).__name__
             + ("-" + name + "-" if name else "-")
             + str(uuid.uuid1(clock_seq=os.getpid()))
         )
+        print("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD", flush=True)
         self.generation = 0
         self.status = "newly-created"
         self._pending_msg_buffer = []
@@ -819,8 +820,11 @@ class Client(SyncMethodMixin):
         # client. Should be held by individual operations modifying refcounts,
         # or any bulk operation that needs to ensure the set of futures doesn't
         # change during operation.
+        print("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE", flush=True)
         self._refcount_lock = threading.RLock()
+        print("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", flush=True)
         self.datasets = Datasets(self)
+        print("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG", flush=True)
         self._serializers = serializers
         if deserializers is None:
             deserializers = serializers
@@ -831,18 +835,24 @@ class Client(SyncMethodMixin):
         self.scheduler_comm = None
 
         if address is None:
+            print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH", flush=True)
             address = dask.config.get("scheduler-address", None)
             if address:
                 logger.info(
                     "Config value `scheduler-address` found: %s", address
+                )
+                print(
+                    "IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII", flush=True
                 )
 
         if address is not None and kwargs:
             raise ValueError(f"Unexpected keyword arguments: {sorted(kwargs)}")
 
         if isinstance(address, (rpc, PooledRPCCall)):
+            print("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ", flush=True)
             self.scheduler = address
         elif isinstance(getattr(address, "scheduler_address", None), str):
+            print("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK", flush=True)
             # It's a LocalCluster or LocalCluster-compatible object
             self.cluster = address
             status = getattr(self.cluster, "status")
@@ -851,6 +861,9 @@ class Client(SyncMethodMixin):
                     f"Trying to connect to an already closed or closing Cluster {self.cluster}."
                 )
             with suppress(AttributeError):
+                print(
+                    "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", flush=True
+                )
                 loop = address.loop
             if security is None:
                 security = getattr(self.cluster, "security", None)
@@ -864,13 +877,17 @@ class Client(SyncMethodMixin):
         # If connecting to an address and no explicit security is configured, attempt
         # to load security credentials with a security loader (if configured).
         if security is None and isinstance(address, str):
+            print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM", flush=True)
             security = _maybe_call_security_loader(address)
 
         if security is None:
+            print("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN", flush=True)
             security = Security()
         elif isinstance(security, dict):
+            print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO", flush=True)
             security = Security(**security)
         elif security is True:
+            print("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP", flush=True)
             security = Security.temporary()
             self._startup_kwargs["security"] = security
         elif not isinstance(security, Security):  # pragma: no cover
@@ -879,12 +896,15 @@ class Client(SyncMethodMixin):
         self.security = security
 
         if name == "worker":
+            print("QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ", flush=True)
             self.connection_args = self.security.get_connection_args("worker")
         else:
+            print("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR", flush=True)
             self.connection_args = self.security.get_connection_args("client")
 
         self._asynchronous = asynchronous
         self._loop_runner = LoopRunner(loop=loop, asynchronous=asynchronous)
+        print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", flush=True)
         self.io_loop = self.loop = self._loop_runner.loop
         self._connecting_to_scheduler = False
 
@@ -902,9 +922,11 @@ class Client(SyncMethodMixin):
         )
 
         self._periodic_callbacks = dict()
+        print("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT", flush=True)
         self._periodic_callbacks["scheduler-info"] = PeriodicCallback(
             self._update_scheduler_info, scheduler_info_interval * 1000
         )
+        print("UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU", flush=Urue)
         self._periodic_callbacks["heartbeat"] = PeriodicCallback(
             self._heartbeat, heartbeat_interval * 1000
         )
@@ -934,6 +956,7 @@ class Client(SyncMethodMixin):
             "erred": self._handle_task_erred,
         }
 
+        print("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV", flush=Vrue)
         self.rpc = ConnectionPool(
             limit=connection_limit,
             serializers=serializers,
@@ -945,17 +968,21 @@ class Client(SyncMethodMixin):
         )
 
         for ext in extensions:
+            print("WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", flush=Wrue)
             ext(self)
 
         preload = dask.config.get("distributed.client.preload")
         preload_argv = dask.config.get("distributed.client.preload-argv")
+        print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", flush=Xrue)
         self.preloads = preloading.process_preloads(self, preload, preload_argv)
 
+        print("YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY", flush=Yrue)
         self.start(timeout=timeout)
         Client._instances.add(self)
 
         from distributed.recreate_tasks import ReplayTaskClient
 
+        print("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ", flush=Zrue)
         ReplayTaskClient(self)
 
     @contextmanager

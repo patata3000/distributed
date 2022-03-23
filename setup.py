@@ -6,8 +6,6 @@ import sys
 from setuptools import find_packages, setup
 from setuptools.extension import Extension
 
-import versioneer
-
 requires = open("requirements.txt").read().strip().split("\n")
 setup_requires = []
 install_requires = []
@@ -52,7 +50,9 @@ if cython_arg:
         Cython.Compiler.Options.annotate = True
 
     cyext_modules = [
-        Extension("distributed.scheduler", sources=["distributed/scheduler.py"]),
+        Extension(
+            "distributed.scheduler", sources=["distributed/scheduler.py"]
+        ),
     ]
     for e in cyext_modules:
         e.cython_directives = {  # type: ignore
@@ -66,16 +66,15 @@ if cython_arg:
 
 
 setup(
-    name="distributed",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    name="dask-distrib",
+    version="1.0.2",
     description="Distributed scheduler for Dask",
     url="https://distributed.dask.org",
     project_urls={
-        "Source": "https://github.com/dask/distributed",
+        "Source": "https://github.com/patata3000/distributed",
     },
-    maintainer="Matthew Rocklin",
-    maintainer_email="mrocklin@gmail.com",
+    maintainer="guillaume",
+    maintainer_email="guillaume.attia91@gmail.com",
     python_requires=">=3.8",
     license="BSD",
     package_data={
